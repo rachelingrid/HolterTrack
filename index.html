@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Diário Holter</title>
+
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 650px;
+      margin: auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .painel {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin: 5px 0;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .relatorio {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .acoes {
+      margin-top: 20px;
+    }
+
+    @media print {
+
+      .painel,
+      .acoes {
+        display: none;
+      }
+
+      body {
+        background: white;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>Diário de Atividades — Holter</h1>
+
+
+  <div class="painel">
+
+    <label>
+      Nome do paciente
+    </label>
+
+    <input
+      type="text"
+      id="paciente"
+      placeholder="Digite o nome"
+      onchange="salvarPaciente()"
+    >
+
+
+    <button onclick="registrar('REFEIÇÃO')">
+      REFEIÇÃO
+    </button>
+
+
+    <button onclick="registrar('CAMINHOU')">
+      CAMINHOU
+    </button>
+
+
+    <button onclick="registrar('ATIVIDADE FÍSICA LEVE')">
+      ATIVIDADE FÍSICA LEVE
+    </button>
+
+
+    <button onclick="registrar('ATIVIDADE FÍSICA MODERADA')">
+      ATIVIDADE FÍSICA MODERADA
+    </button>
+
+
+    <button onclick="registrar('ATIVIDADE FÍSICA DE RESISTÊNCIA')">
+      ATIVIDADE FÍSICA DE RESISTÊNCIA
+    </button>
+
+
+    <button onclick="registrar('INÍCIO DO SONO')">
+      INÍCIO DO SONO
+    </button>
+
+
+    <button onclick="registrar('DESPERTAR')">
+      DESPERTAR
+    </button>
+
+
+    <button onclick="registrarMedicacao()">
+      MEDICAÇÃO
+    </button>
+
+  </div>
+
+
+
+  <div class="relatorio">
+
+    <h2>Relatório</h2>
+
+    <p>
+      Paciente:
+      <strong id="nomeRelatorio">
+        Não informado
+      </strong>
+    </p>
+
+    <table>
+
+      <thead>
+
+        <tr>
+          <th>Data</th>
+          <th>Hora</th>
+          <th>Evento</th>
+          <th>Detalhe</th>
+        </tr>
+
+      </thead>
+
+      <tbody id="tabelaEventos">
+      </tbody>
+
+    </table>
+
+  </div>
+
+
+
+  <div class="acoes">
+
+    <button onclick="exportarCSV()">
+      EXPORTAR CSV
+    </button>
+
+    <button onclick="window.print()">
+      IMPRIMIR / SALVAR PDF
+    </button>
+
+    <button onclick="limparRegistros()">
+      APAGAR REGISTROS
+    </button>
+
+  </div>
+
+
+
+<script>
+
+let eventos =
+  JSON.parse(
+    localStorage.getItem("eventosHolter")
+  ) || [];
+
+
+let nomePaciente =
+  localStorage.getItem("pacienteHolter") || "";
+
+
+
+/* ==============================
+   REGISTRO DOS EVENTOS
+================================ */
+
+function registrar(tipo) {
+
+  const agora = new Date();
+
+  const evento = {
+
+    tipo: tipo,
+
+    detalhe: "",
+
+    timestamp:
+      agora.toISOString(),
+
+    data:
+      agora.toLocaleDateString("pt-BR"),
+
+    hora:
+      agora.toLocaleTimeString(
+        "pt-BR",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        }
+      )
+
+  };
+
+  eventos.push(evento);
+
+  salvarEventos();
+
+}
+
+
+
+/* ==============================
+   MEDICAÇÃO
+================================ */
+
+function registrarMedicacao() {
+
+  const medicamento =
+    prompt(
+      "Qual medicação você tomou?"
+    );
+
+
+  if (
+    medicamento === null ||
+    medicamento.trim() === ""
+  ) {
+
+    alert(
+      "É necessário informar a medicação."
+    );
+
+    return;
+
+  }
+
+
+  const agora = new Date();
+
+
+  const evento = {
+
+    tipo: "MEDICAÇÃO",
+
+    detalhe:
+      medicamento.trim(),
+
+    timestamp:
+      agora.toISOString(),
+
+    data:
+      agora.toLocaleDateString("pt-BR"),
+
+    hora:
+      agora.toLocaleTimeString(
+        "pt-BR",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        }
+      )
+
+  };
+
+
+  eventos.push(evento);
+
+  salvarEventos();
+
+}
+
+
+
+/* ==============================
+   SALVAR
+================================ */
+
+function salvarEventos() {
+
+  localStorage.setItem(
+    "eventosHolter",
+    JSON.stringify(eventos)
+  );
+
+  mostrarEventos();
+
+}
+
+
+
+/* ==============================
+   MOSTRAR RELATÓRIO
+================================ */
+
+function mostrarEventos() {
+
+  const tabela =
+    document.getElementById(
+      "tabelaEventos"
+    );
+
+
+  tabela.innerHTML = "";
+
+
+  eventos.forEach(
+    function(evento) {
+
+      const linha =
+        document.createElement("tr");
+
+
+      linha.innerHTML = `
+
+        <td>${evento.data}</td>
+
+        <td>${evento.hora}</td>
+
+        <td>${evento.tipo}</td>
+
+        <td>${evento.detalhe}</td>
+
+      `;
+
+
+      tabela.appendChild(linha);
+
+    }
+  );
+
+}
+
+
+
+/* ==============================
+   PACIENTE
+================================ */
+
+function salvarPaciente() {
+
+  nomePaciente =
+    document
+      .getElementById("paciente")
+      .value;
+
+
+  localStorage.setItem(
+    "pacienteHolter",
+    nomePaciente
+  );
+
+
+  atualizarPaciente();
+
+}
+
+
+function atualizarPaciente() {
+
+  document
+    .getElementById("paciente")
+    .value =
+      nomePaciente;
+
+
+  document
+    .getElementById(
+      "nomeRelatorio"
+    )
+    .innerText =
+      nomePaciente ||
+      "Não informado";
+
+}
+
+
+
+/* ==============================
+   EXPORTAR CSV
+================================ */
+
+function exportarCSV() {
+
+  let csv =
+    "Data;Hora;Evento;Detalhe;Timestamp\n";
+
+
+  eventos.forEach(
+    function(evento) {
+
+      csv +=
+
+        `"${evento.data}";` +
+
+        `"${evento.hora}";` +
+
+        `"${evento.tipo}";` +
+
+        `"${evento.detalhe}";` +
+
+        `"${evento.timestamp}"\n`;
+
+    }
+  );
+
+
+  const arquivo =
+    new Blob(
+      [csv],
+      {
+        type:
+          "text/csv;charset=utf-8;"
+      }
+    );
+
+
+  const link =
+    document.createElement("a");
+
+
+  link.href =
+    URL.createObjectURL(arquivo);
+
+
+  link.download =
+    "diario_holter.csv";
+
+
+  link.click();
+
+}
+
+
+
+/* ==============================
+   APAGAR
+================================ */
+
+function limparRegistros() {
+
+  const confirmar =
+    confirm(
+      "Deseja realmente apagar todos os registros?"
+    );
+
+
+  if (!confirmar) {
+    return;
+  }
+
+
+  eventos = [];
+
+
+  localStorage.removeItem(
+    "eventosHolter"
+  );
+
+
+  mostrarEventos();
+
+}
+
+
+
+/* ==============================
+   INICIALIZAÇÃO
+================================ */
+
+atualizarPaciente();
+
+mostrarEventos();
+
+</script>
+
+
+</body>
+
+</html>
