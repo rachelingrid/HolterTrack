@@ -201,6 +201,11 @@ O acesso ao repositório privado não implica cessão ou concessão de quaisquer
 
 Qualquer futura alteração do regime de licenciamento deverá ser formalmente indicada neste repositório.
 
+Copyright (c) 2026 Raquel Ingrid. All rights reserved.
+
+This source code and related documentation are the confidential and proprietary information of the author. 
+Unlicensed copying, distribution, modification, or public display via any medium is strictly prohibited.
+
 ---
 
 ## Autoria
